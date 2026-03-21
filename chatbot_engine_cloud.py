@@ -4,7 +4,6 @@ import streamlit as st
 from rag import load_vectorstore
 from translator import translate_to_english, translate_from_english, detect_language
 
-# ── Load HuggingFace token from Streamlit secrets ──
 HF_TOKEN = st.secrets["HF_TOKEN"]
 API_URL   = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
 HEADERS   = {"Authorization": f"Bearer {HF_TOKEN}"}
@@ -32,6 +31,9 @@ def query_hf(prompt):
         if isinstance(result, list) and "generated_text" in result[0]:
             return result[0]["generated_text"].strip()
         elif isinstance(result, dict) and "error" in result:
+            # Model may be loading — retry message
+            if "loading" in str(result.get("error", "")).lower():
+                return "The AI model is warming up. Please try again in 20 seconds."
             return f"Model error: {result['error']}"
         else:
             return "Sorry, I could not generate a response. Please try again."
@@ -67,7 +69,8 @@ def chatbot(query, history=None):
     lang          = detect_language(query)
     english_query = translate_to_english(query)
 
-    docs    = db.max_marginal_relevance_search(english_query, k=3, fetch_k=10)
+    # Use similarity_search instead of MMR — works with all embedding types
+    docs    = db.similarity_search(english_query, k=3)
     context = "\n\n".join([doc.page_content for doc in docs])[:1500]
 
     prompt   = build_prompt(context, english_query, history)
