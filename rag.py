@@ -1,51 +1,13 @@
 import os
-import pickle
-import numpy as np
+import re
 import streamlit as st
-from langchain_core.documents import Document
-from langchain_core.embeddings import Embeddings
-from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import TextLoader, PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from sklearn.feature_extraction.text import TfidfVectorizer
+from langchain_core.documents import Document
 
-FAISS_INDEX_PATH = "faiss_index"
-
-# ── TF-IDF Embeddings — no download, works everywhere ──
-class TFIDFEmbeddings(Embeddings):
-    def __init__(self):
-        self.vectorizer = TfidfVectorizer(
-            max_features=384,
-            ngram_range=(1, 2),
-            sublinear_tf=True
-        )
-        self.fitted = False
-        self.dim = 384
-
-    def _normalize(self, vec):
-        norm = np.linalg.norm(vec)
-        return (vec / norm).tolist() if norm > 0 else vec.tolist()
-
-    def fit(self, texts):
-        self.vectorizer.fit(texts)
-        self.fitted = True
-
-    def embed_documents(self, texts):
-        if not self.fitted:
-            self.fit(texts)
-        matrix = self.vectorizer.transform(texts).toarray()
-        return [self._normalize(row) for row in matrix]
-
-    def embed_query(self, text):
-        if not self.fitted:
-            return [0.0] * self.dim
-        vec = self.vectorizer.transform([text]).toarray()[0]
-        return self._normalize(vec)
-
-# Global embeddings instance (keeps vectorizer fitted across calls)
-@st.cache_resource
-def get_embeddings():
-    return TFIDFEmbeddings()
+# ── Simple in-memory document store ──
+# No FAISS, no embeddings, no model downloads
+# Uses keyword matching — reliable on any server
 
 def get_splitter():
     return RecursiveCharacterTextSplitter(
@@ -77,57 +39,48 @@ def load_documents():
 
     if not docs:
         docs = [Document(
-            page_content="This is LinguaBot, a multilingual AI assistant. Upload your documents to get started.",
+            page_content="This is LinguaBot, a multilingual AI assistant. Upload documents to get started.",
             metadata={"source": "default"}
         )]
 
     return docs
 
-def create_vectorstore():
-    documents  = load_documents()
-    splitter   = get_splitter()
-    chunks     = splitter.split_documents(documents)
-    embeddings = get_embeddings()
+class SimpleDocStore:
+    """
+    Lightweight document store using keyword search.
+    No FAISS, no embeddings, no downloads — works everywhere.
+    """
 
-    # Fit vectorizer on all document texts
-    all_texts = [doc.page_content for doc in chunks]
-    embeddings.fit(all_texts)
+    def __init__(self, chunks):
+        self.chunks = chunks
 
-    db = FAISS.from_documents(chunks, embeddings)
+    def _score(self, query, text):
+        query_words = set(re.findall(r'\w+', query.lower()))
+        text_words  = set(re.findall(r'\w+', text.lower()))
+        if not query_words:
+            return 0
+        overlap = query_words & text_words
+        return len(overlap) / len(query_words)
 
-    try:
-        db.save_local(FAISS_INDEX_PATH)
-        # Save fitted vectorizer alongside index
-        with open(f"{FAISS_INDEX_PATH}/vectorizer.pkl", "wb") as f:
-            pickle.dump(embeddings.vectorizer, f)
-        print(f"Vectorstore saved to '{FAISS_INDEX_PATH}'")
-    except Exception as e:
-        print(f"Could not save index: {e}")
+    def similarity_search(self, query, k=3):
+        scored = [
+            (self._score(query, chunk.page_content), chunk)
+            for chunk in self.chunks
+        ]
+        scored.sort(key=lambda x: x[0], reverse=True)
+        return [chunk for _, chunk in scored[:k]]
 
-    return db
+    def merge_chunks(self, new_chunks):
+        self.chunks.extend(new_chunks)
+
 
 def load_vectorstore():
-    embeddings = get_embeddings()
+    documents = load_documents()
+    splitter  = get_splitter()
+    chunks    = splitter.split_documents(documents)
+    print(f"Loaded {len(chunks)} chunks from documents")
+    return SimpleDocStore(chunks)
 
-    if os.path.exists(FAISS_INDEX_PATH) and os.path.exists(f"{FAISS_INDEX_PATH}/vectorizer.pkl"):
-        try:
-            print("Loading vectorstore from disk...")
-            # Restore fitted vectorizer
-            with open(f"{FAISS_INDEX_PATH}/vectorizer.pkl", "rb") as f:
-                embeddings.vectorizer = pickle.load(f)
-                embeddings.fitted = True
-
-            db = FAISS.load_local(
-                FAISS_INDEX_PATH,
-                embeddings,
-                allow_dangerous_deserialization=True
-            )
-            return db
-        except Exception as e:
-            print(f"Could not load saved index, rebuilding: {e}")
-
-    print("Building vectorstore from documents...")
-    return create_vectorstore()
 
 def merge_documents_into_db(db, file_bytes, filename):
     import tempfile
@@ -162,22 +115,8 @@ def merge_documents_into_db(db, file_bytes, filename):
     for doc in docs:
         doc.metadata["source"] = filename
 
-    splitter   = get_splitter()
-    chunks     = splitter.split_documents(docs)
-    embeddings = get_embeddings()
-
-    # Refit vectorizer with new texts added
-    new_texts = [doc.page_content for doc in chunks]
-    embeddings.fit(new_texts)
-
-    new_db = FAISS.from_documents(chunks, embeddings)
-    db.merge_from(new_db)
-
-    try:
-        db.save_local(FAISS_INDEX_PATH)
-        with open(f"{FAISS_INDEX_PATH}/vectorizer.pkl", "wb") as f:
-            pickle.dump(embeddings.vectorizer, f)
-    except Exception as e:
-        print(f"Could not save after merge: {e}")
+    splitter = get_splitter()
+    chunks   = splitter.split_documents(docs)
+    db.merge_chunks(chunks)
 
     return db, len(chunks)

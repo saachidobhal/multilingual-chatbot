@@ -3,11 +3,8 @@ langchain
 langchain-community
 langchain-core
 langchain-text-splitters
-faiss-cpu
 deep-translator
 langdetect
 pypdf
 python-docx
 requests
-scikit-learn
-numpy
