@@ -1,18 +1,46 @@
 import os
+import streamlit as st
 from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import TextLoader, PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
+from langchain_core.embeddings import Embeddings
+import requests
 
 FAISS_INDEX_PATH = "faiss_index"
 
+# ── Lightweight embeddings using HuggingFace Inference API ──
+# No model download needed — calls HF API instead
+class HFInferenceEmbeddings(Embeddings):
+    def __init__(self):
+        self.api_url = "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2"
+        try:
+            self.token = st.secrets["HF_TOKEN"]
+        except Exception:
+            self.token = os.environ.get("HF_TOKEN", "")
+        self.headers = {"Authorization": f"Bearer {self.token}"}
+
+    def _embed(self, texts):
+        response = requests.post(
+            self.api_url,
+            headers=self.headers,
+            json={"inputs": texts, "options": {"wait_for_model": True}},
+            timeout=30
+        )
+        result = response.json()
+        if isinstance(result, list):
+            return result
+        raise ValueError(f"Embedding error: {result}")
+
+    def embed_documents(self, texts):
+        return self._embed(texts)
+
+    def embed_query(self, text):
+        result = self._embed([text])
+        return result[0]
+
 def get_embeddings():
-    return HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2",
-        model_kwargs={"device": "cpu"},
-        encode_kwargs={"normalize_embeddings": True}
-    )
+    return HFInferenceEmbeddings()
 
 def get_splitter():
     return RecursiveCharacterTextSplitter(
@@ -24,7 +52,6 @@ def get_splitter():
 def load_documents():
     docs = []
 
-    # Make sure data folder exists
     if not os.path.exists("data"):
         os.makedirs("data")
 
@@ -43,7 +70,6 @@ def load_documents():
             except Exception as e:
                 print(f"Could not load {file}: {e}")
 
-    # If no documents found, create a minimal placeholder
     if not docs:
         docs = [Document(
             page_content="This is LinguaBot, a multilingual AI assistant. Upload documents to get started.",
@@ -53,25 +79,23 @@ def load_documents():
     return docs
 
 def create_vectorstore():
-    documents = load_documents()
-    splitter  = get_splitter()
-    docs      = splitter.split_documents(documents)
+    documents  = load_documents()
+    splitter   = get_splitter()
+    docs       = splitter.split_documents(documents)
     embeddings = get_embeddings()
-    db = FAISS.from_documents(docs, embeddings)
+    db         = FAISS.from_documents(docs, embeddings)
 
-    # Only save locally — on cloud this is temporary storage
     try:
         db.save_local(FAISS_INDEX_PATH)
         print(f"Vectorstore saved to '{FAISS_INDEX_PATH}'")
     except Exception as e:
-        print(f"Could not save index (ok on cloud): {e}")
+        print(f"Could not save index: {e}")
 
     return db
 
 def load_vectorstore():
     embeddings = get_embeddings()
 
-    # Try loading from disk first (works locally)
     if os.path.exists(FAISS_INDEX_PATH):
         try:
             print(f"Loading vectorstore from disk: '{FAISS_INDEX_PATH}'")
@@ -84,7 +108,6 @@ def load_vectorstore():
         except Exception as e:
             print(f"Could not load saved index, rebuilding: {e}")
 
-    # Build fresh (always happens on cloud first run)
     print("Building vectorstore from documents...")
     return create_vectorstore()
 
@@ -131,6 +154,6 @@ def merge_documents_into_db(db, file_bytes, filename):
     try:
         db.save_local(FAISS_INDEX_PATH)
     except Exception as e:
-        print(f"Could not save after merge (ok on cloud): {e}")
+        print(f"Could not save after merge: {e}")
 
     return db, len(chunks)
