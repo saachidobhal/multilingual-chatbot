@@ -1,0 +1,13 @@
+streamlit
+langchain
+langchain-community
+langchain-huggingface
+langchain-core
+langchain-text-splitters
+faiss-cpu
+sentence-transformers
+deep-translator
+langdetect
+pypdf
+python-docx
+requests
