@@ -10,13 +10,20 @@ HEADERS  = {
     "Content-Type":  "application/json"
 }
 
+# Confirmed serverless models on Together via HF router
+MODELS = [
+    "meta-llama/Meta-Llama-3.1-8B-Instruct-Turbo",
+    "mistralai/Mixtral-8x7B-Instruct-v0.1",
+    "Qwen/Qwen2.5-7B-Instruct-Turbo",
+]
+
 @st.cache_resource
 def load_store():
     return DocStore().build()
 
-def query_hf(prompt):
+def query_hf(prompt, model):
     payload = {
-        "model": "meta-llama/Llama-3.2-3B-Instruct-Turbo",
+        "model": model,
         "messages": [
             {
                 "role":    "system",
@@ -34,21 +41,31 @@ def query_hf(prompt):
         response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=60)
 
         if response.status_code != 200:
-            return f"API error {response.status_code}: {response.text[:200]}"
+            return None, f"{response.status_code}: {response.text[:100]}"
 
         result = response.json()
 
         if "choices" in result and len(result["choices"]) > 0:
-            return result["choices"][0]["message"]["content"].strip()
+            return result["choices"][0]["message"]["content"].strip(), None
         elif "error" in result:
-            return f"Model error: {result['error']}"
+            return None, str(result["error"])
         else:
-            return f"Unexpected response: {str(result)[:200]}"
+            return None, f"Unexpected: {str(result)[:100]}"
 
     except requests.exceptions.Timeout:
-        return "Request timed out. Please try again."
+        return None, "timeout"
     except Exception as e:
-        return f"Connection error: {str(e)}"
+        return None, str(e)
+
+def get_response(prompt):
+    # Try each model in order until one works
+    for model in MODELS:
+        text, error = query_hf(prompt, model)
+        if text:
+            return text
+        print(f"Model {model} failed: {error}")
+
+    return "Sorry, all models are currently unavailable. Please try again in a moment."
 
 def build_prompt(context, question, history):
     history_text = ""
@@ -77,6 +94,6 @@ def chatbot(query, history=None):
     context = "\n\n".join([doc.page_content for doc in docs])[:1500]
 
     prompt   = build_prompt(context, english_query, history)
-    response = query_hf(prompt)
+    response = get_response(prompt)
 
     return translate_from_english(response, lang)
