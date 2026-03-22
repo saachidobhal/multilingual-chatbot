@@ -4,7 +4,7 @@ from retriever import DocStore
 from translator import translate_to_english, translate_from_english, detect_language
 
 HF_TOKEN = st.secrets["HF_TOKEN"]
-API_URL  = "https://router.huggingface.co/novita/v3/openai/chat/completions"
+API_URL  = "https://router.huggingface.co/together/v1/chat/completions"
 HEADERS  = {
     "Authorization": f"Bearer {HF_TOKEN}",
     "Content-Type":  "application/json"
@@ -16,7 +16,7 @@ def load_store():
 
 def query_hf(prompt):
     payload = {
-        "model": "mistralai/Mistral-7B-Instruct-v0.3",
+        "model": "meta-llama/Llama-3.2-3B-Instruct-Turbo",
         "messages": [
             {
                 "role":    "system",
