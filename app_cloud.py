@@ -4,7 +4,7 @@ from chatbot_engine_cloud import chatbot, load_store
 st.set_page_config(
     page_title="LinguaBot — Multilingual Assistant",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
 LANG_INFO = {
@@ -28,6 +28,7 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 #MainMenu, footer, header { visibility: hidden; }
 .block-container { padding: 0 !important; max-width: 100% !important; }
 .stApp { background: #0f1117; }
+
 section[data-testid="stSidebar"] { background: #141820; border-right: 1px solid #1e2530; padding: 0; }
 section[data-testid="stSidebar"] > div { padding: 0; }
 .sidebar-header { background: #C2185B; padding: 20px 20px 16px; }
@@ -46,42 +47,69 @@ section[data-testid="stSidebar"] > div { padding: 0; }
 .error-banner { background: #2a0f0f; border: 1px solid #991b1b; border-radius: 8px; padding: 8px 12px; color: #f87171; font-size: 12px; margin-top: 8px; }
 .kb-stat { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 12px; color: #6b7280; border-bottom: 1px solid #1a1f2e; }
 .kb-stat span:last-child { color: #d1d5db; font-weight: 500; }
-.header-bar { background: #141820; border-bottom: 1px solid #1e2530; padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; }
+
+/* Header with hamburger */
+.header-bar {
+    background: #141820; border-bottom: 1px solid #1e2530;
+    padding: 14px 16px; display: flex; align-items: center;
+    justify-content: space-between; position: sticky; top: 0; z-index: 100;
+}
 .header-logo { font-size: 18px; font-weight: 600; color: #e8eaf0; letter-spacing: -0.3px; }
 .header-logo span { color: #4f8ef7; }
-.header-status { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #6b7280; }
+.header-right { display: flex; align-items: center; gap: 12px; }
+.header-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6b7280; }
 .status-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; display: inline-block; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
-.chat-wrapper { max-width: 800px; margin: 0 auto; padding: 28px 20px 130px; }
+
+/* Hamburger button */
+.hamburger-btn {
+    background: #1a1f2e; border: 1px solid #1e2530; border-radius: 8px;
+    padding: 7px 10px; cursor: pointer; color: #9ca3af; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+}
+.hamburger-btn:hover { background: #1e2530; color: #e8eaf0; }
+
+.chat-wrapper { max-width: 800px; margin: 0 auto; padding: 20px 16px 130px; }
 .msg-row { display: flex; margin-bottom: 18px; gap: 10px; animation: fadeUp 0.3s ease; }
 @keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 .msg-row.user { flex-direction: row-reverse; }
 .avatar { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; margin-top: 2px; font-weight: 600; }
 .avatar.bot  { background: #1e2d4a; color: #4f8ef7; }
 .avatar.user { background: #1a2a1a; color: #22c55e; }
-.bubble-wrap { display: flex; flex-direction: column; max-width: 74%; }
+.bubble-wrap { display: flex; flex-direction: column; max-width: 78%; }
 .msg-row.user .bubble-wrap { align-items: flex-end; }
 .bubble { padding: 11px 15px; border-radius: 12px; font-size: 14px; line-height: 1.65; word-break: break-word; }
 .bubble.bot  { background: #141820; border: 1px solid #1e2530; color: #d1d5db; border-radius: 4px 12px 12px 12px; }
 .bubble.user { background: #1a3a5c; border: 1px solid #1e4a7a; color: #e2eeff; border-radius: 12px 4px 12px 12px; }
 .lang-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: #6b7280; margin-top: 4px; padding: 2px 8px; background: #1a1f2e; border-radius: 20px; border: 1px solid #1e2530; }
-.typing-indicator { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; animation: fadeUp 0.3s ease; }
+.typing-indicator { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
 .typing-dots { display: flex; gap: 5px; padding: 13px 16px; background: #141820; border: 1px solid #1e2530; border-radius: 4px 12px 12px 12px; }
 .typing-dots span { width: 6px; height: 6px; background: #4f8ef7; border-radius: 50%; animation: bounce 1.2s infinite; }
 .typing-dots span:nth-child(2){animation-delay:.2s} .typing-dots span:nth-child(3){animation-delay:.4s}
 @keyframes bounce { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-6px);opacity:1} }
-.welcome-card { background: #141820; border: 1px solid #1e2530; border-radius: 16px; padding: 36px; text-align: center; margin: 50px auto; max-width: 460px; }
-.welcome-card h2 { font-size: 20px; font-weight: 600; color: #e8eaf0; margin-bottom: 8px; }
-.welcome-card p  { font-size: 13px; color: #6b7280; line-height: 1.6; margin: 0; }
-.input-area { position: fixed; bottom: 0; left: 0; right: 0; background: #0f1117; border-top: 1px solid #1e2530; padding: 14px 20px 18px; z-index: 99; }
+.welcome-card { background: #141820; border: 1px solid #1e2530; border-radius: 16px; padding: 28px; text-align: center; margin: 30px auto; max-width: 440px; }
+.welcome-card h2 { font-size: 18px; font-weight: 600; color: #e8eaf0; margin-bottom: 8px; }
+.welcome-card p  { font-size: 13px; color: #6b7280; line-height: 1.6; margin: 0 0 16px 0; }
+.welcome-hint { font-size: 12px; color: #4f8ef7; margin-top: 12px; }
+
+.input-area { position: fixed; bottom: 0; left: 0; right: 0; background: #0f1117; border-top: 1px solid #1e2530; padding: 12px 16px 16px; z-index: 99; }
 .stTextInput > div > div > input { background: #141820 !important; border: 1px solid #1e2530 !important; border-radius: 10px !important; color: #e8eaf0 !important; font-family: 'DM Sans', sans-serif !important; font-size: 14px !important; padding: 11px 15px !important; caret-color: #4f8ef7; }
 .stTextInput > div > div > input:focus { border-color: #4f8ef7 !important; box-shadow: 0 0 0 3px rgba(79,142,247,0.12) !important; }
 .stTextInput > div > div > input::placeholder { color: #4b5563 !important; }
-.stButton > button { background: #4f8ef7 !important; color: white !important; border: none !important; border-radius: 10px !important; padding: 11px 20px !important; font-family: 'DM Sans', sans-serif !important; font-size: 13px !important; font-weight: 500 !important; transition: background 0.2s !important; }
+.stButton > button { background: #4f8ef7 !important; color: white !important; border: none !important; border-radius: 10px !important; padding: 11px 16px !important; font-family: 'DM Sans', sans-serif !important; font-size: 13px !important; font-weight: 500 !important; transition: background 0.2s !important; }
 .stButton > button:hover { background: #3b7af0 !important; }
 div[data-testid="stSpinner"] { display: none; }
 [data-testid="stFileUploader"] { background: #1a1f2e !important; border: 1px dashed #1e4a7a !important; border-radius: 10px !important; padding: 8px !important; }
 [data-testid="stFileUploader"] label { color: #9ca3af !important; font-size: 12px !important; }
+
+/* Mobile tweaks */
+@media (max-width: 768px) {
+    .bubble-wrap { max-width: 88%; }
+    .chat-wrapper { padding: 16px 12px 120px; }
+    .header-bar { padding: 12px 14px; }
+    .header-logo { font-size: 16px; }
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -93,7 +121,6 @@ if "upload_msg"    not in st.session_state: st.session_state.upload_msg = None
 if "upload_ok"     not in st.session_state: st.session_state.upload_ok = True
 if "input_key"     not in st.session_state: st.session_state.input_key = 0
 
-# Load doc store once
 store = load_store()
 
 # ══════════════════════════════════════════════
@@ -183,7 +210,7 @@ with st.sidebar:
     st.markdown(f"""
     <div class="kb-stat"><span>Session uploads</span><span>{total_docs} files</span></div>
     <div class="kb-stat"><span>Chunks added</span><span>{total_chunks}</span></div>
-    <div class="kb-stat"><span>Model</span><span>Mistral 7B (HF)</span></div>
+    <div class="kb-stat"><span>Model</span><span>Llama 3.1 8B</span></div>
     <div class="kb-stat"><span>Search</span><span>Keyword</span></div>
     """, unsafe_allow_html=True)
     st.markdown('</div>', unsafe_allow_html=True)
@@ -197,25 +224,45 @@ with st.sidebar:
     st.markdown('</div>', unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════
-# MAIN CHAT
+# HEADER with hamburger menu button
 # ══════════════════════════════════════════════
-st.markdown("""
-<div class="header-bar">
-    <div class="header-logo">Lingua<span>Bot</span></div>
-    <div class="header-status">
-        <div class="status-dot"></div>
-        HuggingFace &middot; Cloud
-    </div>
-</div>
-""", unsafe_allow_html=True)
+col_logo, col_right = st.columns([6, 1])
 
+with col_logo:
+    st.markdown("""
+    <div class="header-bar">
+        <div class="header-logo">Lingua<span>Bot</span></div>
+        <div class="header-status">
+            <div class="status-dot"></div>
+            HuggingFace &middot; Cloud
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col_right:
+    # This button toggles the sidebar open on mobile
+    if st.button("☰", help="Open menu", use_container_width=True):
+        st.session_state["sidebar_open"] = True
+        # Force sidebar open via JS
+        st.markdown("""
+        <script>
+        const sidebar = window.parent.document.querySelector('[data-testid="stSidebar"]');
+        if (sidebar) sidebar.style.display = 'block';
+        window.parent.document.querySelector('[data-testid="collapsedControl"]')?.click();
+        </script>
+        """, unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════
+# CHAT AREA
+# ══════════════════════════════════════════════
 st.markdown('<div class="chat-wrapper">', unsafe_allow_html=True)
 
 if not st.session_state.messages:
     st.markdown("""
     <div class="welcome-card">
         <h2>Multilingual Assistant</h2>
-        <p>Ask me anything in your language. Upload documents from the sidebar to expand my knowledge.</p>
+        <p>Ask me anything in your language. Upload documents from the menu to expand my knowledge.</p>
+        <div class="welcome-hint">☰ Tap the menu button to upload documents</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -254,6 +301,7 @@ if st.session_state.thinking:
 
 st.markdown('</div>', unsafe_allow_html=True)
 
+# ── Input bar ──
 st.markdown('<div class="input-area">', unsafe_allow_html=True)
 col1, col2 = st.columns([8, 1])
 with col1:
