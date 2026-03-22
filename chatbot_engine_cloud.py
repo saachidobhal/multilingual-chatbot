@@ -4,10 +4,10 @@ from retriever import DocStore
 from translator import translate_to_english, translate_from_english, detect_language
 
 HF_TOKEN = st.secrets["HF_TOKEN"]
-API_URL   = "https://router.huggingface.co/hf-inference/models/mistralai/Mistral-7B-Instruct-v0.2/v1/chat/completions"
-HEADERS   = {
+API_URL  = "https://router.huggingface.co/novita/v3/openai/chat/completions"
+HEADERS  = {
     "Authorization": f"Bearer {HF_TOKEN}",
-    "Content-Type": "application/json"
+    "Content-Type":  "application/json"
 }
 
 @st.cache_resource
@@ -16,25 +16,37 @@ def load_store():
 
 def query_hf(prompt):
     payload = {
-        "model": "mistralai/Mistral-7B-Instruct-v0.2",
+        "model": "mistralai/Mistral-7B-Instruct-v0.3",
         "messages": [
-            {"role": "user", "content": prompt}
+            {
+                "role":    "system",
+                "content": "You are a helpful multilingual assistant. Answer clearly and concisely."
+            },
+            {
+                "role":    "user",
+                "content": prompt
+            }
         ],
-        "max_tokens": 512,
+        "max_tokens":  512,
         "temperature": 0.3
     }
     try:
         response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=60)
-        result   = response.json()
+
+        if response.status_code != 200:
+            return f"API error {response.status_code}: {response.text[:200]}"
+
+        result = response.json()
 
         if "choices" in result and len(result["choices"]) > 0:
             return result["choices"][0]["message"]["content"].strip()
         elif "error" in result:
-            if "loading" in str(result.get("error", "")).lower():
-                return "The AI model is warming up. Please try again in 20 seconds."
             return f"Model error: {result['error']}"
         else:
-            return "Sorry, I could not generate a response. Please try again."
+            return f"Unexpected response: {str(result)[:200]}"
+
+    except requests.exceptions.Timeout:
+        return "Request timed out. Please try again."
     except Exception as e:
         return f"Connection error: {str(e)}"
 
@@ -45,18 +57,11 @@ def build_prompt(context, question, history):
             role = "User" if msg["role"] == "user" else "Assistant"
             history_text += f"{role}: {msg['content']}\n"
 
-    return f"""You are a helpful multilingual assistant.
-
-First try to answer using the context below.
-If the context contains the answer, use it.
-If not, use your general knowledge to answer helpfully.
-Never say "I don't know" — always give a useful response.
-Be concise and clear.
+    return f"""Answer the question below using the context if relevant. If the context doesn't help, use your general knowledge.
 
 Context:
 {context}
 
-Conversation so far:
 {history_text}
 User: {question}"""
 
