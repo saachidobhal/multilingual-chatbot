@@ -1,5 +1,6 @@
 import streamlit as st
 from chatbot_engine_cloud import chatbot, load_store
+from datetime import datetime
 
 st.set_page_config(
     page_title="LinguaBot",
@@ -16,6 +17,19 @@ LANG_INFO = {
     "ml": ("🇮🇳", "Malayalam"),
 }
 
+def get_greeting():
+    hour = datetime.utcnow().hour + 5  # IST offset
+    if hour < 12:
+        return "Good Morning", "🌅"
+    elif hour < 17:
+        return "Good Afternoon", "☀️"
+    elif hour < 21:
+        return "Good Evening", "🌆"
+    else:
+        return "Good Night", "🌙"
+
+greeting, emoji = get_greeting()
+
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&display=swap');
@@ -24,7 +38,6 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 .block-container { padding: 0 !important; max-width: 100% !important; }
 .stApp { background: #0f1117; }
 
-/* Header */
 .header-bar {
     background: #141820; border-bottom: 1px solid #1e2530;
     padding: 13px 20px; display: flex; align-items: center;
@@ -36,22 +49,45 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 .status-dot { width: 7px; height: 7px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; display: inline-block; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
-/* Upload panel */
-.upload-panel {
-    background: #141820; border: 1px solid #1e2530; border-radius: 12px;
-    padding: 16px; margin: 12px 16px 0;
+/* Welcome hero */
+.hero {
+    background: linear-gradient(135deg, #141820 0%, #1a2035 100%);
+    border: 1px solid #1e2530; border-radius: 16px;
+    padding: 32px 24px 28px; text-align: center;
+    margin: 20px 16px 0;
 }
-.upload-panel h3 { color: #9ca3af; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 10px 0; }
+.hero-emoji { font-size: 40px; margin-bottom: 10px; }
+.hero-greeting { font-size: 13px; color: #4f8ef7; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 6px; }
+.hero-title { font-size: 26px; font-weight: 600; color: #e8eaf0; margin-bottom: 10px; line-height: 1.2; }
+.hero-title span { color: #4f8ef7; }
+.hero-sub { font-size: 14px; color: #6b7280; line-height: 1.7; margin-bottom: 20px; }
+
+/* Language chips */
+.lang-section { margin: 0 16px 0; }
+.lang-label { font-size: 10px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; padding-top: 16px; }
+.lang-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { background: #1a1f2e; border: 1px solid #1e2530; border-radius: 20px; padding: 4px 11px; font-size: 12px; color: #9ca3af; display: inline-block; transition: all 0.2s; }
+.chip:hover { background: #1e2d4a; border-color: #4f8ef7; color: #e8eaf0; }
+
+/* Suggestion pills */
+.suggestions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 4px; }
+.suggestion {
+    background: #1a1f2e; border: 1px solid #1e3a5c;
+    border-radius: 20px; padding: 6px 14px;
+    font-size: 12px; color: #4f8ef7; cursor: pointer;
+    transition: all 0.2s;
+}
+.suggestion:hover { background: #1e2d4a; }
+
+/* Upload panel */
+.upload-panel { background: #141820; border: 1px solid #1e2530; border-radius: 12px; padding: 16px; margin: 14px 16px 0; }
+.upload-label { font-size: 10px; font-weight: 600; color: #6b7280; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 10px; }
 .doc-pill { display: flex; align-items: center; gap: 8px; background: #1a1f2e; border: 1px solid #1e2530; border-radius: 8px; padding: 7px 10px; margin-top: 6px; font-size: 12px; color: #d1d5db; }
 .doc-icon { color: #4f8ef7; }
 .doc-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .doc-chunks { color: #6b7280; font-size: 10px; }
 .success-banner { background: #0f2a1a; border: 1px solid #166534; border-radius: 8px; padding: 8px 12px; color: #22c55e; font-size: 12px; margin-top: 8px; }
 .error-banner { background: #2a0f0f; border: 1px solid #991b1b; border-radius: 8px; padding: 8px 12px; color: #f87171; font-size: 12px; margin-top: 8px; }
-
-/* Lang chips */
-.lang-row { display: flex; flex-wrap: wrap; gap: 5px; padding: 8px 16px 0; }
-.chip { background: #1a1f2e; border: 1px solid #1e2530; border-radius: 20px; padding: 2px 9px; font-size: 11px; color: #9ca3af; }
 
 /* Chat */
 .chat-wrapper { max-width: 700px; margin: 0 auto; padding: 16px 16px 140px; }
@@ -72,11 +108,8 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 .typing-dots span { width: 6px; height: 6px; background: #4f8ef7; border-radius: 50%; animation: bounce 1.2s infinite; }
 .typing-dots span:nth-child(2){animation-delay:.2s} .typing-dots span:nth-child(3){animation-delay:.4s}
 @keyframes bounce { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-5px);opacity:1} }
-.welcome-card { background: #141820; border: 1px solid #1e2530; border-radius: 14px; padding: 28px 20px; text-align: center; margin: 20px auto; }
-.welcome-card h2 { font-size: 18px; font-weight: 600; color: #e8eaf0; margin-bottom: 8px; }
-.welcome-card p  { font-size: 13px; color: #6b7280; line-height: 1.6; margin: 0; }
 
-/* Input bar */
+/* Input */
 .input-area { position: fixed; bottom: 0; left: 0; right: 0; background: #0f1117; border-top: 1px solid #1e2530; padding: 10px 14px 14px; z-index: 99; }
 .stTextInput > div > div > input { background: #141820 !important; border: 1px solid #1e2530 !important; border-radius: 10px !important; color: #e8eaf0 !important; font-family: 'DM Sans', sans-serif !important; font-size: 14px !important; padding: 11px 14px !important; caret-color: #4f8ef7; }
 .stTextInput > div > div > input:focus { border-color: #4f8ef7 !important; box-shadow: 0 0 0 3px rgba(79,142,247,0.12) !important; }
@@ -85,10 +118,7 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 .stButton > button:hover { background: #3b7af0 !important; }
 div[data-testid="stSpinner"] { display: none; }
 [data-testid="stFileUploader"] { background: #1a1f2e !important; border: 1px dashed #1e4a7a !important; border-radius: 10px !important; padding: 6px !important; }
-
-/* Expander styling */
 [data-testid="stExpander"] { background: #141820 !important; border: 1px solid #1e2530 !important; border-radius: 12px !important; margin: 10px 16px 0 !important; }
-[data-testid="stExpander"] summary { color: #9ca3af !important; font-size: 13px !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -102,73 +132,44 @@ if "input_key"     not in st.session_state: st.session_state.input_key = 0
 
 store = load_store()
 
-# ══════════════════════════════════════════════
-# HEADER
-# ══════════════════════════════════════════════
+# ── Header ──
 st.markdown("""
 <div class="header-bar">
     <div class="header-logo">Lingua<span>Bot</span></div>
     <div class="header-status">
         <div class="status-dot"></div>
-        HuggingFace &middot; Cloud
+        HuggingFace · Cloud
     </div>
 </div>
 """, unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════
-# UPLOAD PANEL — always visible, tap to expand
+# WELCOME HERO — only shown before first message
 # ══════════════════════════════════════════════
-with st.expander("📂  Upload Document / View Languages", expanded=False):
-    tab1, tab2 = st.tabs(["Upload Document", "Supported Languages"])
+if not st.session_state.messages:
+    st.markdown(f"""
+    <div class="hero">
+        <div class="hero-emoji">{emoji}</div>
+        <div class="hero-greeting">{greeting}</div>
+        <div class="hero-title">Welcome to <span>LinguaBot</span></div>
+        <div class="hero-sub">
+            Your multilingual AI assistant — ask me anything<br>
+            in Hindi, Bengali, Tamil, Hinglish or any Indian language.
+        </div>
+        <div class="suggestions">
+            <div class="suggestion">महिला सुरक्षा क्या है?</div>
+            <div class="suggestion">What is GDP?</div>
+            <div class="suggestion">আপনি কি বাংলায় কথা বলতে পারেন?</div>
+            <div class="suggestion">AI kya hota hai?</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
-    with tab1:
-        uploaded_file = st.file_uploader(
-            label="PDF, TXT or Word files",
-            type=["pdf", "txt", "docx"],
-            label_visibility="visible"
-        )
-        if uploaded_file is not None:
-            already = any(d["name"] == uploaded_file.name for d in st.session_state.uploaded_docs)
-            if not already:
-                if st.button("Add to Knowledge Base", use_container_width=True):
-                    with st.spinner(f"Processing {uploaded_file.name}..."):
-                        try:
-                            file_bytes = uploaded_file.read()
-                            num_chunks = store.add(file_bytes, uploaded_file.name)
-                            st.session_state.uploaded_docs.append({
-                                "name":   uploaded_file.name,
-                                "chunks": num_chunks,
-                                "type":   uploaded_file.name.split(".")[-1].upper()
-                            })
-                            st.session_state.upload_msg = f"Added {num_chunks} chunks from {uploaded_file.name}"
-                            st.session_state.upload_ok  = True
-                        except Exception as e:
-                            st.session_state.upload_msg = f"Error: {str(e)}"
-                            st.session_state.upload_ok  = False
-                    st.rerun()
-            else:
-                st.markdown('<div class="error-banner">Already in knowledge base.</div>', unsafe_allow_html=True)
-
-        if st.session_state.upload_msg:
-            css_class = "success-banner" if st.session_state.upload_ok else "error-banner"
-            st.markdown(f'<div class="{css_class}">{st.session_state.upload_msg}</div>', unsafe_allow_html=True)
-
-        if st.session_state.uploaded_docs:
-            st.markdown("**Uploaded files:**")
-            icons = {"PDF": "📄", "TXT": "📝", "DOCX": "📘"}
-            for doc in st.session_state.uploaded_docs:
-                icon = icons.get(doc["type"], "📎")
-                st.markdown(f"""
-                <div class="doc-pill">
-                    <span class="doc-icon">{icon}</span>
-                    <span class="doc-name">{doc["name"]}</span>
-                    <span class="doc-chunks">{doc["chunks"]} chunks</span>
-                </div>
-                """, unsafe_allow_html=True)
-
-    with tab2:
-        st.markdown("""
-        <div class="lang-row" style="padding:8px 0 0">
+    # Language chips — always visible on home screen
+    st.markdown("""
+    <div class="lang-section">
+        <div class="lang-label">Supported Languages</div>
+        <div class="lang-chips">
             <span class="chip">🇮🇳 Hindi</span>
             <span class="chip">🇮🇳 Tamil</span>
             <span class="chip">🇧🇩 Bengali</span>
@@ -182,20 +183,60 @@ with st.expander("📂  Upload Document / View Languages", expanded=False):
             <span class="chip">🇬🇧 English</span>
             <span class="chip">🔀 Hinglish</span>
         </div>
-        """, unsafe_allow_html=True)
-
-# ══════════════════════════════════════════════
-# CHAT AREA
-# ══════════════════════════════════════════════
-st.markdown('<div class="chat-wrapper">', unsafe_allow_html=True)
-
-if not st.session_state.messages:
-    st.markdown("""
-    <div class="welcome-card">
-        <h2>Multilingual Assistant</h2>
-        <p>Ask me anything in any language.<br>Tap <b>Upload Document</b> above to add your files.</p>
     </div>
     """, unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════
+# UPLOAD PANEL — always accessible
+# ══════════════════════════════════════════════
+with st.expander("📂  Upload Document", expanded=False):
+    uploaded_file = st.file_uploader(
+        label="PDF, TXT or Word files",
+        type=["pdf", "txt", "docx"],
+        label_visibility="visible"
+    )
+    if uploaded_file is not None:
+        already = any(d["name"] == uploaded_file.name for d in st.session_state.uploaded_docs)
+        if not already:
+            if st.button("Add to Knowledge Base", use_container_width=True):
+                with st.spinner(f"Processing {uploaded_file.name}..."):
+                    try:
+                        file_bytes = uploaded_file.read()
+                        num_chunks = store.add(file_bytes, uploaded_file.name)
+                        st.session_state.uploaded_docs.append({
+                            "name":   uploaded_file.name,
+                            "chunks": num_chunks,
+                            "type":   uploaded_file.name.split(".")[-1].upper()
+                        })
+                        st.session_state.upload_msg = f"Added {num_chunks} chunks from {uploaded_file.name}"
+                        st.session_state.upload_ok  = True
+                    except Exception as e:
+                        st.session_state.upload_msg = f"Error: {str(e)}"
+                        st.session_state.upload_ok  = False
+                st.rerun()
+        else:
+            st.markdown('<div class="error-banner">Already in knowledge base.</div>', unsafe_allow_html=True)
+
+    if st.session_state.upload_msg:
+        css_class = "success-banner" if st.session_state.upload_ok else "error-banner"
+        st.markdown(f'<div class="{css_class}">{st.session_state.upload_msg}</div>', unsafe_allow_html=True)
+
+    if st.session_state.uploaded_docs:
+        icons = {"PDF": "📄", "TXT": "📝", "DOCX": "📘"}
+        for doc in st.session_state.uploaded_docs:
+            icon = icons.get(doc["type"], "📎")
+            st.markdown(f"""
+            <div class="doc-pill">
+                <span class="doc-icon">{icon}</span>
+                <span class="doc-name">{doc["name"]}</span>
+                <span class="doc-chunks">{doc["chunks"]} chunks</span>
+            </div>
+            """, unsafe_allow_html=True)
+
+# ══════════════════════════════════════════════
+# CHAT MESSAGES
+# ══════════════════════════════════════════════
+st.markdown('<div class="chat-wrapper">', unsafe_allow_html=True)
 
 from translator import detect_language
 
@@ -245,12 +286,12 @@ with col2:
     send = st.button("Send", use_container_width=True)
 st.markdown('</div>', unsafe_allow_html=True)
 
-# Clear chat in a small row above input
-if st.button("🗑 Clear chat", use_container_width=False):
-    st.session_state.messages = []
-    st.session_state.thinking = False
-    st.session_state.input_key += 1
-    st.rerun()
+if st.session_state.messages:
+    if st.button("🗑 Clear chat", use_container_width=False):
+        st.session_state.messages = []
+        st.session_state.thinking = False
+        st.session_state.input_key += 1
+        st.rerun()
 
 if send and user_input.strip():
     st.session_state.messages.append({"role": "user", "content": user_input.strip()})
