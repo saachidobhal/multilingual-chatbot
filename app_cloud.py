@@ -2,22 +2,17 @@ import streamlit as st
 from chatbot_engine_cloud import chatbot, load_store
 
 st.set_page_config(
-    page_title="LinguaBot — Multilingual Assistant",
-    layout="wide",
+    page_title="LinguaBot",
+    layout="centered",
     initial_sidebar_state="collapsed"
 )
 
 LANG_INFO = {
-    "en": ("🇬🇧", "English"),
-    "hi": ("🇮🇳", "Hindi"),
-    "ta": ("🇮🇳", "Tamil"),
-    "bn": ("🇧🇩", "Bengali"),
-    "mr": ("🇮🇳", "Marathi"),
-    "te": ("🇮🇳", "Telugu"),
-    "ur": ("🇵🇰", "Urdu"),
-    "gu": ("🇮🇳", "Gujarati"),
-    "pa": ("🇮🇳", "Punjabi"),
-    "kn": ("🇮🇳", "Kannada"),
+    "en": ("🇬🇧", "English"), "hi": ("🇮🇳", "Hindi"),
+    "ta": ("🇮🇳", "Tamil"),   "bn": ("🇧🇩", "Bengali"),
+    "mr": ("🇮🇳", "Marathi"), "te": ("🇮🇳", "Telugu"),
+    "ur": ("🇵🇰", "Urdu"),    "gu": ("🇮🇳", "Gujarati"),
+    "pa": ("🇮🇳", "Punjabi"), "kn": ("🇮🇳", "Kannada"),
     "ml": ("🇮🇳", "Malayalam"),
 }
 
@@ -29,87 +24,71 @@ html, body, [class*="css"] { font-family: 'DM Sans', sans-serif; }
 .block-container { padding: 0 !important; max-width: 100% !important; }
 .stApp { background: #0f1117; }
 
-section[data-testid="stSidebar"] { background: #141820; border-right: 1px solid #1e2530; padding: 0; }
-section[data-testid="stSidebar"] > div { padding: 0; }
-.sidebar-header { background: #C2185B; padding: 20px 20px 16px; }
-.sidebar-header h2 { color: white; font-size: 15px; font-weight: 600; margin: 0 0 2px 0; }
-.sidebar-header p  { color: #FFCDD2; font-size: 11px; margin: 0; }
-.cloud-badge { background: #0f2a1a; border: 1px solid #166534; border-radius: 6px; padding: 6px 12px; color: #22c55e; font-size: 11px; margin: 10px 16px 0; text-align: center; }
-.sidebar-section { padding: 14px 16px 10px; border-bottom: 1px solid #1e2530; }
-.sidebar-section h3 { color: #9ca3af; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; margin: 0 0 10px 0; }
-.lang-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 0 4px; }
-.chip { background: #1a1f2e; border: 1px solid #1e2530; border-radius: 20px; padding: 3px 10px; font-size: 11px; color: #9ca3af; display: inline-block; }
-.doc-pill { display: flex; align-items: center; gap: 8px; background: #1a1f2e; border: 1px solid #1e2530; border-radius: 8px; padding: 7px 10px; margin-bottom: 6px; font-size: 12px; color: #d1d5db; }
-.doc-pill .doc-icon { color: #4f8ef7; font-size: 14px; }
-.doc-pill .doc-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.doc-pill .doc-chunks { color: #6b7280; font-size: 10px; white-space: nowrap; }
-.success-banner { background: #0f2a1a; border: 1px solid #166534; border-radius: 8px; padding: 8px 12px; color: #22c55e; font-size: 12px; margin-top: 8px; }
-.error-banner { background: #2a0f0f; border: 1px solid #991b1b; border-radius: 8px; padding: 8px 12px; color: #f87171; font-size: 12px; margin-top: 8px; }
-.kb-stat { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; font-size: 12px; color: #6b7280; border-bottom: 1px solid #1a1f2e; }
-.kb-stat span:last-child { color: #d1d5db; font-weight: 500; }
-
-/* Header with hamburger */
+/* Header */
 .header-bar {
     background: #141820; border-bottom: 1px solid #1e2530;
-    padding: 14px 16px; display: flex; align-items: center;
+    padding: 13px 20px; display: flex; align-items: center;
     justify-content: space-between; position: sticky; top: 0; z-index: 100;
 }
-.header-logo { font-size: 18px; font-weight: 600; color: #e8eaf0; letter-spacing: -0.3px; }
+.header-logo { font-size: 18px; font-weight: 600; color: #e8eaf0; }
 .header-logo span { color: #4f8ef7; }
-.header-right { display: flex; align-items: center; gap: 12px; }
-.header-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #6b7280; }
-.status-dot { width: 8px; height: 8px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; display: inline-block; }
+.header-status { display: flex; align-items: center; gap: 6px; font-size: 11px; color: #6b7280; }
+.status-dot { width: 7px; height: 7px; background: #22c55e; border-radius: 50%; animation: pulse 2s infinite; display: inline-block; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
 
-/* Hamburger button */
-.hamburger-btn {
-    background: #1a1f2e; border: 1px solid #1e2530; border-radius: 8px;
-    padding: 7px 10px; cursor: pointer; color: #9ca3af; font-size: 16px;
-    display: flex; align-items: center; justify-content: center;
-    transition: background 0.2s;
+/* Upload panel */
+.upload-panel {
+    background: #141820; border: 1px solid #1e2530; border-radius: 12px;
+    padding: 16px; margin: 12px 16px 0;
 }
-.hamburger-btn:hover { background: #1e2530; color: #e8eaf0; }
+.upload-panel h3 { color: #9ca3af; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin: 0 0 10px 0; }
+.doc-pill { display: flex; align-items: center; gap: 8px; background: #1a1f2e; border: 1px solid #1e2530; border-radius: 8px; padding: 7px 10px; margin-top: 6px; font-size: 12px; color: #d1d5db; }
+.doc-icon { color: #4f8ef7; }
+.doc-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.doc-chunks { color: #6b7280; font-size: 10px; }
+.success-banner { background: #0f2a1a; border: 1px solid #166534; border-radius: 8px; padding: 8px 12px; color: #22c55e; font-size: 12px; margin-top: 8px; }
+.error-banner { background: #2a0f0f; border: 1px solid #991b1b; border-radius: 8px; padding: 8px 12px; color: #f87171; font-size: 12px; margin-top: 8px; }
 
-.chat-wrapper { max-width: 800px; margin: 0 auto; padding: 20px 16px 130px; }
-.msg-row { display: flex; margin-bottom: 18px; gap: 10px; animation: fadeUp 0.3s ease; }
-@keyframes fadeUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+/* Lang chips */
+.lang-row { display: flex; flex-wrap: wrap; gap: 5px; padding: 8px 16px 0; }
+.chip { background: #1a1f2e; border: 1px solid #1e2530; border-radius: 20px; padding: 2px 9px; font-size: 11px; color: #9ca3af; }
+
+/* Chat */
+.chat-wrapper { max-width: 700px; margin: 0 auto; padding: 16px 16px 140px; }
+.msg-row { display: flex; margin-bottom: 16px; gap: 8px; animation: fadeUp 0.3s ease; }
+@keyframes fadeUp { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
 .msg-row.user { flex-direction: row-reverse; }
-.avatar { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; margin-top: 2px; font-weight: 600; }
+.avatar { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; margin-top: 2px; font-weight: 600; }
 .avatar.bot  { background: #1e2d4a; color: #4f8ef7; }
 .avatar.user { background: #1a2a1a; color: #22c55e; }
-.bubble-wrap { display: flex; flex-direction: column; max-width: 78%; }
+.bubble-wrap { display: flex; flex-direction: column; max-width: 85%; }
 .msg-row.user .bubble-wrap { align-items: flex-end; }
-.bubble { padding: 11px 15px; border-radius: 12px; font-size: 14px; line-height: 1.65; word-break: break-word; }
+.bubble { padding: 10px 14px; border-radius: 12px; font-size: 14px; line-height: 1.65; word-break: break-word; }
 .bubble.bot  { background: #141820; border: 1px solid #1e2530; color: #d1d5db; border-radius: 4px 12px 12px 12px; }
 .bubble.user { background: #1a3a5c; border: 1px solid #1e4a7a; color: #e2eeff; border-radius: 12px 4px 12px 12px; }
 .lang-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; color: #6b7280; margin-top: 4px; padding: 2px 8px; background: #1a1f2e; border-radius: 20px; border: 1px solid #1e2530; }
-.typing-indicator { display: flex; align-items: center; gap: 10px; margin-bottom: 18px; }
-.typing-dots { display: flex; gap: 5px; padding: 13px 16px; background: #141820; border: 1px solid #1e2530; border-radius: 4px 12px 12px 12px; }
+.typing-indicator { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.typing-dots { display: flex; gap: 5px; padding: 12px 15px; background: #141820; border: 1px solid #1e2530; border-radius: 4px 12px 12px 12px; }
 .typing-dots span { width: 6px; height: 6px; background: #4f8ef7; border-radius: 50%; animation: bounce 1.2s infinite; }
 .typing-dots span:nth-child(2){animation-delay:.2s} .typing-dots span:nth-child(3){animation-delay:.4s}
-@keyframes bounce { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-6px);opacity:1} }
-.welcome-card { background: #141820; border: 1px solid #1e2530; border-radius: 16px; padding: 28px; text-align: center; margin: 30px auto; max-width: 440px; }
+@keyframes bounce { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-5px);opacity:1} }
+.welcome-card { background: #141820; border: 1px solid #1e2530; border-radius: 14px; padding: 28px 20px; text-align: center; margin: 20px auto; }
 .welcome-card h2 { font-size: 18px; font-weight: 600; color: #e8eaf0; margin-bottom: 8px; }
-.welcome-card p  { font-size: 13px; color: #6b7280; line-height: 1.6; margin: 0 0 16px 0; }
-.welcome-hint { font-size: 12px; color: #4f8ef7; margin-top: 12px; }
+.welcome-card p  { font-size: 13px; color: #6b7280; line-height: 1.6; margin: 0; }
 
-.input-area { position: fixed; bottom: 0; left: 0; right: 0; background: #0f1117; border-top: 1px solid #1e2530; padding: 12px 16px 16px; z-index: 99; }
-.stTextInput > div > div > input { background: #141820 !important; border: 1px solid #1e2530 !important; border-radius: 10px !important; color: #e8eaf0 !important; font-family: 'DM Sans', sans-serif !important; font-size: 14px !important; padding: 11px 15px !important; caret-color: #4f8ef7; }
+/* Input bar */
+.input-area { position: fixed; bottom: 0; left: 0; right: 0; background: #0f1117; border-top: 1px solid #1e2530; padding: 10px 14px 14px; z-index: 99; }
+.stTextInput > div > div > input { background: #141820 !important; border: 1px solid #1e2530 !important; border-radius: 10px !important; color: #e8eaf0 !important; font-family: 'DM Sans', sans-serif !important; font-size: 14px !important; padding: 11px 14px !important; caret-color: #4f8ef7; }
 .stTextInput > div > div > input:focus { border-color: #4f8ef7 !important; box-shadow: 0 0 0 3px rgba(79,142,247,0.12) !important; }
 .stTextInput > div > div > input::placeholder { color: #4b5563 !important; }
-.stButton > button { background: #4f8ef7 !important; color: white !important; border: none !important; border-radius: 10px !important; padding: 11px 16px !important; font-family: 'DM Sans', sans-serif !important; font-size: 13px !important; font-weight: 500 !important; transition: background 0.2s !important; }
+.stButton > button { background: #4f8ef7 !important; color: white !important; border: none !important; border-radius: 10px !important; padding: 11px 14px !important; font-family: 'DM Sans', sans-serif !important; font-size: 13px !important; font-weight: 500 !important; transition: background 0.2s !important; }
 .stButton > button:hover { background: #3b7af0 !important; }
 div[data-testid="stSpinner"] { display: none; }
-[data-testid="stFileUploader"] { background: #1a1f2e !important; border: 1px dashed #1e4a7a !important; border-radius: 10px !important; padding: 8px !important; }
-[data-testid="stFileUploader"] label { color: #9ca3af !important; font-size: 12px !important; }
+[data-testid="stFileUploader"] { background: #1a1f2e !important; border: 1px dashed #1e4a7a !important; border-radius: 10px !important; padding: 6px !important; }
 
-/* Mobile tweaks */
-@media (max-width: 768px) {
-    .bubble-wrap { max-width: 88%; }
-    .chat-wrapper { padding: 16px 12px 120px; }
-    .header-bar { padding: 12px 14px; }
-    .header-logo { font-size: 16px; }
-}
+/* Expander styling */
+[data-testid="stExpander"] { background: #141820 !important; border: 1px solid #1e2530 !important; border-radius: 12px !important; margin: 10px 16px 0 !important; }
+[data-testid="stExpander"] summary { color: #9ca3af !important; font-size: 13px !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -124,21 +103,72 @@ if "input_key"     not in st.session_state: st.session_state.input_key = 0
 store = load_store()
 
 # ══════════════════════════════════════════════
-# SIDEBAR
+# HEADER
 # ══════════════════════════════════════════════
-with st.sidebar:
-    st.markdown("""
-    <div class="sidebar-header">
-        <h2>LinguaBot</h2>
-        <p>Multilingual AI Assistant</p>
+st.markdown("""
+<div class="header-bar">
+    <div class="header-logo">Lingua<span>Bot</span></div>
+    <div class="header-status">
+        <div class="status-dot"></div>
+        HuggingFace &middot; Cloud
     </div>
-    <div class="cloud-badge">Powered by HuggingFace — Cloud Version</div>
-    """, unsafe_allow_html=True)
+</div>
+""", unsafe_allow_html=True)
 
-    st.markdown("""
-    <div class="sidebar-section">
-        <h3>Supported Languages</h3>
-        <div class="lang-chips">
+# ══════════════════════════════════════════════
+# UPLOAD PANEL — always visible, tap to expand
+# ══════════════════════════════════════════════
+with st.expander("📂  Upload Document / View Languages", expanded=False):
+    tab1, tab2 = st.tabs(["Upload Document", "Supported Languages"])
+
+    with tab1:
+        uploaded_file = st.file_uploader(
+            label="PDF, TXT or Word files",
+            type=["pdf", "txt", "docx"],
+            label_visibility="visible"
+        )
+        if uploaded_file is not None:
+            already = any(d["name"] == uploaded_file.name for d in st.session_state.uploaded_docs)
+            if not already:
+                if st.button("Add to Knowledge Base", use_container_width=True):
+                    with st.spinner(f"Processing {uploaded_file.name}..."):
+                        try:
+                            file_bytes = uploaded_file.read()
+                            num_chunks = store.add(file_bytes, uploaded_file.name)
+                            st.session_state.uploaded_docs.append({
+                                "name":   uploaded_file.name,
+                                "chunks": num_chunks,
+                                "type":   uploaded_file.name.split(".")[-1].upper()
+                            })
+                            st.session_state.upload_msg = f"Added {num_chunks} chunks from {uploaded_file.name}"
+                            st.session_state.upload_ok  = True
+                        except Exception as e:
+                            st.session_state.upload_msg = f"Error: {str(e)}"
+                            st.session_state.upload_ok  = False
+                    st.rerun()
+            else:
+                st.markdown('<div class="error-banner">Already in knowledge base.</div>', unsafe_allow_html=True)
+
+        if st.session_state.upload_msg:
+            css_class = "success-banner" if st.session_state.upload_ok else "error-banner"
+            st.markdown(f'<div class="{css_class}">{st.session_state.upload_msg}</div>', unsafe_allow_html=True)
+
+        if st.session_state.uploaded_docs:
+            st.markdown("**Uploaded files:**")
+            icons = {"PDF": "📄", "TXT": "📝", "DOCX": "📘"}
+            for doc in st.session_state.uploaded_docs:
+                icon = icons.get(doc["type"], "📎")
+                st.markdown(f"""
+                <div class="doc-pill">
+                    <span class="doc-icon">{icon}</span>
+                    <span class="doc-name">{doc["name"]}</span>
+                    <span class="doc-chunks">{doc["chunks"]} chunks</span>
+                </div>
+                """, unsafe_allow_html=True)
+
+    with tab2:
+        st.markdown("""
+        <div class="lang-row" style="padding:8px 0 0">
             <span class="chip">🇮🇳 Hindi</span>
             <span class="chip">🇮🇳 Tamil</span>
             <span class="chip">🇧🇩 Bengali</span>
@@ -152,104 +182,6 @@ with st.sidebar:
             <span class="chip">🇬🇧 English</span>
             <span class="chip">🔀 Hinglish</span>
         </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown('<div class="sidebar-section"><h3>Add Document</h3>', unsafe_allow_html=True)
-
-    uploaded_file = st.file_uploader(
-        label="", type=["pdf", "txt", "docx"],
-        label_visibility="collapsed"
-    )
-
-    if uploaded_file is not None:
-        already = any(d["name"] == uploaded_file.name for d in st.session_state.uploaded_docs)
-        if not already:
-            if st.button("Add to Knowledge Base", use_container_width=True):
-                with st.spinner(f"Processing {uploaded_file.name}..."):
-                    try:
-                        file_bytes = uploaded_file.read()
-                        num_chunks = store.add(file_bytes, uploaded_file.name)
-                        st.session_state.uploaded_docs.append({
-                            "name":   uploaded_file.name,
-                            "chunks": num_chunks,
-                            "type":   uploaded_file.name.split(".")[-1].upper()
-                        })
-                        st.session_state.upload_msg = f"Added {num_chunks} chunks from {uploaded_file.name}"
-                        st.session_state.upload_ok  = True
-                    except Exception as e:
-                        st.session_state.upload_msg = f"Error: {str(e)}"
-                        st.session_state.upload_ok  = False
-                st.rerun()
-        else:
-            st.markdown('<div class="error-banner">Already in knowledge base.</div>', unsafe_allow_html=True)
-
-    if st.session_state.upload_msg:
-        css_class = "success-banner" if st.session_state.upload_ok else "error-banner"
-        st.markdown(f'<div class="{css_class}">{st.session_state.upload_msg}</div>', unsafe_allow_html=True)
-
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    if st.session_state.uploaded_docs:
-        st.markdown('<div class="sidebar-section"><h3>Uploaded Documents</h3>', unsafe_allow_html=True)
-        icons = {"PDF": "📄", "TXT": "📝", "DOCX": "📘"}
-        for doc in st.session_state.uploaded_docs:
-            icon = icons.get(doc["type"], "📎")
-            st.markdown(f"""
-            <div class="doc-pill">
-                <span class="doc-icon">{icon}</span>
-                <span class="doc-name">{doc["name"]}</span>
-                <span class="doc-chunks">{doc["chunks"]} chunks</span>
-            </div>
-            """, unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<div class="sidebar-section"><h3>Stats</h3>', unsafe_allow_html=True)
-    total_docs   = len(st.session_state.uploaded_docs)
-    total_chunks = sum(d["chunks"] for d in st.session_state.uploaded_docs)
-    st.markdown(f"""
-    <div class="kb-stat"><span>Session uploads</span><span>{total_docs} files</span></div>
-    <div class="kb-stat"><span>Chunks added</span><span>{total_chunks}</span></div>
-    <div class="kb-stat"><span>Model</span><span>Llama 3.1 8B</span></div>
-    <div class="kb-stat"><span>Search</span><span>Keyword</span></div>
-    """, unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-    st.markdown('<div class="sidebar-section">', unsafe_allow_html=True)
-    if st.button("Clear Chat History", use_container_width=True):
-        st.session_state.messages = []
-        st.session_state.thinking = False
-        st.session_state.input_key += 1
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# ══════════════════════════════════════════════
-# HEADER with hamburger menu button
-# ══════════════════════════════════════════════
-col_logo, col_right = st.columns([6, 1])
-
-with col_logo:
-    st.markdown("""
-    <div class="header-bar">
-        <div class="header-logo">Lingua<span>Bot</span></div>
-        <div class="header-status">
-            <div class="status-dot"></div>
-            HuggingFace &middot; Cloud
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-with col_right:
-    # This button toggles the sidebar open on mobile
-    if st.button("☰", help="Open menu", use_container_width=True):
-        st.session_state["sidebar_open"] = True
-        # Force sidebar open via JS
-        st.markdown("""
-        <script>
-        const sidebar = window.parent.document.querySelector('[data-testid="stSidebar"]');
-        if (sidebar) sidebar.style.display = 'block';
-        window.parent.document.querySelector('[data-testid="collapsedControl"]')?.click();
-        </script>
         """, unsafe_allow_html=True)
 
 # ══════════════════════════════════════════════
@@ -261,8 +193,7 @@ if not st.session_state.messages:
     st.markdown("""
     <div class="welcome-card">
         <h2>Multilingual Assistant</h2>
-        <p>Ask me anything in your language. Upload documents from the menu to expand my knowledge.</p>
-        <div class="welcome-hint">☰ Tap the menu button to upload documents</div>
+        <p>Ask me anything in any language.<br>Tap <b>Upload Document</b> above to add your files.</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -313,6 +244,13 @@ with col1:
 with col2:
     send = st.button("Send", use_container_width=True)
 st.markdown('</div>', unsafe_allow_html=True)
+
+# Clear chat in a small row above input
+if st.button("🗑 Clear chat", use_container_width=False):
+    st.session_state.messages = []
+    st.session_state.thinking = False
+    st.session_state.input_key += 1
+    st.rerun()
 
 if send and user_input.strip():
     st.session_state.messages.append({"role": "user", "content": user_input.strip()})
