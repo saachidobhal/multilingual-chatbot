@@ -4,8 +4,11 @@ from retriever import DocStore
 from translator import translate_to_english, translate_from_english, detect_language
 
 HF_TOKEN = st.secrets["HF_TOKEN"]
-API_URL   = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
-HEADERS   = {"Authorization": f"Bearer {HF_TOKEN}"}
+API_URL   = "https://router.huggingface.co/hf-inference/models/mistralai/Mistral-7B-Instruct-v0.2/v1/chat/completions"
+HEADERS   = {
+    "Authorization": f"Bearer {HF_TOKEN}",
+    "Content-Type": "application/json"
+}
 
 @st.cache_resource
 def load_store():
@@ -13,21 +16,20 @@ def load_store():
 
 def query_hf(prompt):
     payload = {
-        "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": 512,
-            "temperature": 0.3,
-            "return_full_text": False,
-            "stop": ["User:", "\nUser"]
-        }
+        "model": "mistralai/Mistral-7B-Instruct-v0.2",
+        "messages": [
+            {"role": "user", "content": prompt}
+        ],
+        "max_tokens": 512,
+        "temperature": 0.3
     }
     try:
         response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=60)
         result   = response.json()
 
-        if isinstance(result, list) and len(result) > 0 and "generated_text" in result[0]:
-            return result[0]["generated_text"].strip()
-        elif isinstance(result, dict) and "error" in result:
+        if "choices" in result and len(result["choices"]) > 0:
+            return result["choices"][0]["message"]["content"].strip()
+        elif "error" in result:
             if "loading" in str(result.get("error", "")).lower():
                 return "The AI model is warming up. Please try again in 20 seconds."
             return f"Model error: {result['error']}"
@@ -43,7 +45,7 @@ def build_prompt(context, question, history):
             role = "User" if msg["role"] == "user" else "Assistant"
             history_text += f"{role}: {msg['content']}\n"
 
-    return f"""<s>[INST] You are a helpful multilingual assistant.
+    return f"""You are a helpful multilingual assistant.
 
 First try to answer using the context below.
 If the context contains the answer, use it.
@@ -56,7 +58,7 @@ Context:
 
 Conversation so far:
 {history_text}
-User: {question} [/INST]"""
+User: {question}"""
 
 def chatbot(query, history=None):
     if history is None:
