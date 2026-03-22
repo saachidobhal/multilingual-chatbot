@@ -1,7 +1,6 @@
-import os
 import requests
 import streamlit as st
-from rag import load_vectorstore
+from retriever import DocStore
 from translator import translate_to_english, translate_from_english, detect_language
 
 HF_TOKEN = st.secrets["HF_TOKEN"]
@@ -9,10 +8,8 @@ API_URL   = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-In
 HEADERS   = {"Authorization": f"Bearer {HF_TOKEN}"}
 
 @st.cache_resource
-def load_db():
-    return load_vectorstore()
-
-db = load_db()
+def load_store():
+    return DocStore().build()
 
 def query_hf(prompt):
     payload = {
@@ -28,10 +25,9 @@ def query_hf(prompt):
         response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=60)
         result   = response.json()
 
-        if isinstance(result, list) and "generated_text" in result[0]:
+        if isinstance(result, list) and len(result) > 0 and "generated_text" in result[0]:
             return result[0]["generated_text"].strip()
         elif isinstance(result, dict) and "error" in result:
-            # Model may be loading — retry message
             if "loading" in str(result.get("error", "")).lower():
                 return "The AI model is warming up. Please try again in 20 seconds."
             return f"Model error: {result['error']}"
@@ -66,15 +62,14 @@ def chatbot(query, history=None):
     if history is None:
         history = []
 
+    store         = load_store()
     lang          = detect_language(query)
     english_query = translate_to_english(query)
 
-    # Use similarity_search instead of MMR — works with all embedding types
-    docs    = db.similarity_search(english_query, k=3)
+    docs    = store.search(english_query, k=3)
     context = "\n\n".join([doc.page_content for doc in docs])[:1500]
 
     prompt   = build_prompt(context, english_query, history)
     response = query_hf(prompt)
 
-    final_answer = translate_from_english(response, lang)
-    return final_answer
+    return translate_from_english(response, lang)
